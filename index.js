@@ -1,5 +1,4 @@
 const { Client, GatewayIntentBits, ChannelType, PermissionsBitField } = require("discord.js");
-const { TOKEN } = require("./token");
 const admin = require("firebase-admin");
 const serviceAccount = require("./serviceAccountKey.json");
 
