@@ -2,7 +2,7 @@ const { Client, GatewayIntentBits, ChannelType, PermissionsBitField } = require(
 const admin = require("firebase-admin");
 
 
-const db = admin.firestore();
+const { db, admin } = require('./firebase');
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
