@@ -2,7 +2,7 @@ const { Client, GatewayIntentBits, ChannelType, PermissionsBitField } = require(
 const admin = require("firebase-admin");
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
+  credential: admin.credential.cert(process.env.FIREBASE_SERVICE_ACCOUNT),
 });
 const db = admin.firestore();
 const client = new Client({
