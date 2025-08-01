@@ -1,9 +1,7 @@
 const { Client, GatewayIntentBits, ChannelType, PermissionsBitField } = require("discord.js");
 const admin = require("firebase-admin");
 
-admin.initializeApp({
-  credential: admin.credential.cert(process.env.FIREBASE_SERVICE_ACCOUNT),
-});
+
 const db = admin.firestore();
 const client = new Client({
   intents: [
