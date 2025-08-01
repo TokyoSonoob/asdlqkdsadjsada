@@ -14,7 +14,7 @@ const client = new Client({
   ],
   partials: ['MESSAGE', 'CHANNEL', 'REACTION', 'USER', 'GUILD_MEMBER'],
 });
-
+require("./server");
 require("./verify")(client);
 require("./welcome")(client);
 require("./set")(client);
