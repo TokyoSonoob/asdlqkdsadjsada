@@ -1,5 +1,4 @@
 const { Client, GatewayIntentBits, ChannelType, PermissionsBitField } = require("discord.js");
-const admin = require("firebase-admin");
 
 
 const { db, admin } = require('./firebase');
