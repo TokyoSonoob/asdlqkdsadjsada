@@ -400,7 +400,6 @@ client.once("ready", async () => {
           }
         }
       } catch (e) {
-        console.error(`❌ แจกยศ Admin ใน ${guildId} ล้มเหลว:`, e.message);
       }
     }
   }
